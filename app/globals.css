@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* Green = public / open. Orange = private / sealed. */
+:root {
+  --bg: #ffffff; --surface: #f4f6f2; --line: #dde4da; --text: #0b110d; --muted: #5a675e;
+  --green: #b6f2a2; --green-ink: #1f6b12; --orange: #e8590c;
+}
+.dark {
+  --bg: #070b08; --surface: #0e1510; --line: #1f2c23; --text: #f2f5f0; --muted: #8a998e;
+  --green: #b6f2a2; --green-ink: #b6f2a2; --orange: #ff7a2b;
+  color-scheme: dark;
+}
+
+@theme {
+  --font-display: "Unbounded", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+@theme inline {
+  --color-bg: var(--bg); --color-surface: var(--surface); --color-line: var(--line);
+  --color-text: var(--text); --color-muted: var(--muted); --color-green: var(--green);
+  --color-green-ink: var(--green-ink); --color-orange: var(--orange);
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
