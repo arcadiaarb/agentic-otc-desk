@@ -81,11 +81,14 @@ export async function stepRoom(id: string) {
     const history = msgs.filter((m) => m.kind === "propose" || m.kind === "accept")
       .map((m) => `${m.from === role ? "You" : "Counterparty"} ${m.kind === "accept" ? "accepted" : `proposed ${m.price}`}: "${m.text}"`).join("\n");
 
+    // Spell out both standing prices so the model can't confuse directions.
+    const brief = history ? `${history}\nYour last proposal: ${own ?? "none yet"}. Counterparty's latest proposal: ${their ?? "none yet"}.` : "";
+
     const move = canTake && room.turnCount >= MAX_TURNS - 3
       ? { action: "accept" as const, text: "Let's settle at that price.", ai: false, price: undefined }
       : room.turnCount >= MAX_TURNS - 1
         ? { action: "walk" as const, text: "We couldn't find a price that works for both sides.", ai: false, price: undefined }
-        : await agentMove({ role, pair: room.pair, limit, amount: Number(mine.amount), note: mine.note, own, other: their, turn: room.turnCount, history });
+        : await agentMove({ role, pair: room.pair, limit, amount: Number(mine.amount), note: mine.note, own, other: their, turn: room.turnCount, history: brief });
 
     const now = Timestamp.now();
     const b = fs.batch();

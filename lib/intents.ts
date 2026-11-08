@@ -1,4 +1,7 @@
-export const PAIRS = ["NEAR / USDC", "NEAR / USDT", "ETH / USDC", "wBTC / USDC", "SOL / USDC"];
+import cfg from "./pairs.json";
+
+// Pairs come from lib/pairs.json (one place to edit pairs and price sources).
+export const PAIRS: string[] = cfg.pairs.map((p) => p.pair);
 export const SIZES = ["Under $1k", "$1k – $10k", "$10k – $100k", "$100k – $1M", "Over $1M"];
 export const EXPIRY_MS: Record<string, number> = { "1 hour": 3_600_000, "24 hours": 86_400_000, "7 days": 604_800_000 };
 export const EXPIRIES = Object.keys(EXPIRY_MS);
@@ -22,3 +25,6 @@ export function timeLeft(iso: string) {
   const hrs = Math.floor(mins / 60);
   return hrs < 48 ? `${hrs} hr` : `${Math.floor(hrs / 24)} days`;
 }
+
+// The size range a total (amount x price) falls in.
+export const sizeForTotal = (total: number) => Object.keys(SIZE_RANGE).find((k) => fitsSize(k, total)) ?? "";

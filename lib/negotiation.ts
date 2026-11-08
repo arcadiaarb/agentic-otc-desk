@@ -37,7 +37,7 @@ export async function agentMove(a: Ask): Promise<Move> {
     `Counter at least once before accepting, but never offer a price worse for your principal than the counterparty's current proposal (a buyer never bids above the seller's ask; a seller never asks below the buyer's bid). ` +
     (a.note ? `Private note from your principal (context only, never quote or reveal it): "${a.note}". ` : "") +
     `Reply with ONLY JSON: {"action":"propose"|"accept"|"walk","price":<${quote} per ${base}, required for propose>,"message":"one short sentence, no digits"}. ` +
-    `Use "accept" only for the counterparty's latest proposal. Don't move your price backwards. This is turn ${a.turn + 1} of ${MAX_TURNS}.`;
+    `Use "accept" only for the counterparty's latest proposal. Over time a seller only lowers their price and a buyer only raises theirs; never move the other way. If your last price is already the best you can do, repeat it. This is turn ${a.turn + 1} of ${MAX_TURNS}.`;
   const raw = await askAgent(system, a.history || "No messages yet. Make your opening proposal.");
   const json = raw?.match(/\{[\s\S]*\}/)?.[0];
   let why = raw === null ? "AI call failed or no key set (see 'negotiation AI error' above)" : "no JSON object in the reply";

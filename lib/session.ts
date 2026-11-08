@@ -44,3 +44,17 @@ export function readSession(req: Request): string | null {
 }
 export const cookieHeader = (value: string, maxAge = SESSION_S) =>
   `${SESSION_COOKIE}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${process.env.NODE_ENV === "production" ? "; Secure" : ""}`;
+
+// Listing-agent chat: proves when a chat started (so the 5-minute cap can't be reset by the browser).
+export function makeChatToken(account: string, startedAt: number): string {
+  const body = Buffer.from(`${account}|${startedAt}`).toString("base64url");
+  return `${body}.${mac("chat:" + body).toString("base64url")}`;
+}
+export function readChatToken(token: string, account: string): number | null {
+  const [body, sig] = token.split(".");
+  if (!body || !sig) return null;
+  const want = mac("chat:" + body), got = Buffer.from(sig, "base64url");
+  if (got.length !== want.length || !timingSafeEqual(got, want)) return null;
+  const [acct, started] = Buffer.from(body, "base64url").toString().split("|");
+  return acct === account && Number(started) > 0 ? Number(started) : null;
+}

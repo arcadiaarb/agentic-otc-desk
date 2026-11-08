@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { WalletProvider } from "@/components/wallet-provider";
 import { Header } from "@/components/header";
+import { SpotProvider } from "@/components/spot-provider";
+import { SpotStrip } from "@/components/spot-strip";
 
 export const metadata: Metadata = {
   title: "Tacet",
@@ -23,8 +25,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <WalletProvider>
-          <Header />
-          <main className="mx-auto w-full max-w-5xl px-5 pb-24">{children}</main>
+          <SpotProvider>
+            <Header />
+            <SpotStrip />
+            <main className="mx-auto w-full max-w-5xl px-5 pb-24">{children}</main>
+          </SpotProvider>
         </WalletProvider>
       </body>
     </html>

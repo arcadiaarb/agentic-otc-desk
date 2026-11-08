@@ -8,6 +8,7 @@ import { useWallet } from "./wallet-provider";
 import { EXPIRIES, PAIRS, SIZES, fitsSize } from "@/lib/intents";
 import { btnGhost, btnPrimary } from "@/lib/ui";
 import { TotalLine } from "./total-line";
+import { SpotHint } from "./spot-hint";
 
 type Step = "public" | "private" | "done";
 const field = "w-full rounded-xl border border-line bg-bg px-3.5 py-3 text-sm placeholder:text-muted/60";
@@ -29,12 +30,12 @@ function Select({ label, value, onChange, options, placeholder }: {
   );
 }
 
-export function CreateIntentButton({ className = btnPrimary, children = "Create Intent", onCreated }: { className?: string; children?: ReactNode; onCreated?: () => void }) {
+export function CreateIntentButton({ className = btnPrimary, children = "Create Intent", onCreated, initial }: { className?: string; children?: ReactNode; onCreated?: () => void; initial?: { pair?: string; size?: string; expiry?: string; amount?: string; price?: string; note?: string } }) {
   const { accountId, signedIn, connect, signIn, authError } = useWallet();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("public");
-  const [pub, setPub] = useState({ pair: "", size: "", expiry: "" });
-  const [priv, setPriv] = useState({ amount: "", price: "", note: "" });
+  const [pub, setPub] = useState({ pair: initial?.pair ?? "", size: initial?.size ?? "", expiry: initial?.expiry ?? "" });
+  const [priv, setPriv] = useState({ amount: initial?.amount ?? "", price: initial?.price ?? "", note: initial?.note ?? "" });
   const [error, setError] = useState("");
   const [awaitingWallet, setAwaitingWallet] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -122,6 +123,7 @@ export function CreateIntentButton({ className = btnPrimary, children = "Create 
                   <span className="mb-1.5 block text-sm text-muted">Exact price ({quote} per {base})</span>
                   <input className={field} type="number" inputMode="decimal" min="0" step="any" autoComplete="off" placeholder="0.00" value={priv.price} onChange={(e) => setPriv({ ...priv, price: e.target.value })} />
                 </label>
+                <SpotHint pair={pub.pair} price={priv.price} />
                 <TotalLine amount={priv.amount} price={priv.price} quote={quote} verb="You expect to receive at least" />
                 {Number(priv.amount) > 0 && Number(priv.price) > 0 && !fitsSize(pub.size, Number(priv.amount) * Number(priv.price)) && (
                   <p role="alert" className="text-sm text-orange">That total doesn&apos;t fit “{pub.size}”. Go back and pick the matching size range.</p>

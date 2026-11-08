@@ -8,6 +8,7 @@ import { useWallet } from "./wallet-provider";
 import type { CardIntent } from "./intent-card";
 import { btnGhost, btnPrimary, fieldCls } from "@/lib/ui";
 import { TotalLine } from "./total-line";
+import { SpotHint } from "./spot-hint";
 import { SIZE_RANGE } from "@/lib/intents";
 
 // Buyer's private terms. They go to the server (encrypted) and are only used by the buyer's agent.
@@ -71,6 +72,7 @@ export function RequestNegotiationButton({ intent }: { intent: CardIntent }) {
               <span className="mb-1.5 block text-sm text-muted">Maximum price ({quote} per {base})</span>
               <input className={fieldCls} type="number" inputMode="decimal" min="0" step="any" autoComplete="off" placeholder="0.00" value={terms.price} onChange={(e) => setTerms({ ...terms, price: e.target.value })} />
             </label>
+            <SpotHint pair={intent.pair} price={terms.price} />
             <TotalLine amount={terms.amount} price={terms.price} quote={quote} verb="You plan to spend up to" />
             {over && (
               <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-orange/50 px-3.5 py-3 text-sm">

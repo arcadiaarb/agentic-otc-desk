@@ -1,0 +1,16 @@
+{
+  "refreshMinutes": 60,
+  "warnPercent": 15,
+  "providers": {
+    "binance": { "url": "https://api.binance.com/api/v3/ticker/price?symbol={symbol}", "path": "price" },
+    "binance-vision": { "url": "https://data-api.binance.vision/api/v3/ticker/price?symbol={symbol}", "path": "price" },
+    "coinbase": { "url": "https://api.coinbase.com/v2/prices/{symbol}/spot", "path": "data.amount" }
+  },
+  "pairs": [
+    { "pair": "NEAR / USDC", "sources": [{ "provider": "binance", "symbol": "NEARUSDT" }, { "provider": "binance-vision", "symbol": "NEARUSDT" }, { "provider": "coinbase", "symbol": "NEAR-USD" }] },
+    { "pair": "NEAR / USDT", "sources": [{ "provider": "binance", "symbol": "NEARUSDT" }, { "provider": "binance-vision", "symbol": "NEARUSDT" }, { "provider": "coinbase", "symbol": "NEAR-USD" }] },
+    { "pair": "ETH / USDC", "sources": [{ "provider": "binance", "symbol": "ETHUSDT" }, { "provider": "binance-vision", "symbol": "ETHUSDT" }, { "provider": "coinbase", "symbol": "ETH-USD" }] },
+    { "pair": "wBTC / USDC", "sources": [{ "provider": "binance", "symbol": "BTCUSDT" }, { "provider": "binance-vision", "symbol": "BTCUSDT" }, { "provider": "coinbase", "symbol": "BTC-USD" }] },
+    { "pair": "SOL / USDC", "sources": [{ "provider": "binance", "symbol": "SOLUSDT" }, { "provider": "binance-vision", "symbol": "SOLUSDT" }, { "provider": "coinbase", "symbol": "SOL-USD" }] }
+  ]
+}

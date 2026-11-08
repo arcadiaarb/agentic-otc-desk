@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CreateIntentButton } from "@/components/create-intent-dialog";
 import { IntentCard } from "@/components/intent-card";
-import { btnGhost } from "@/lib/ui";
+import { btnGhost, btnGreen } from "@/lib/ui";
 
 export default function Home() {
   return (
@@ -15,6 +15,7 @@ export default function Home() {
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
           <CreateIntentButton />
+          <Link href="/create" className={btnGreen}>Create intent with AI</Link>
           <Link href="/intents" className={btnGhost}>View Intent</Link>
         </div>
       </div>

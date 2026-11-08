@@ -23,7 +23,7 @@ export default function Intents() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 30000); // pick up listings from other users
+    const t = setInterval(load, 60000); // pick up listings from other users
     return () => clearInterval(t);
   }, [load]);
 

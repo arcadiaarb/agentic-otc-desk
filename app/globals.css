@@ -3,11 +3,11 @@
 /* Green = public / open. Orange = private / sealed. */
 :root {
   --bg: #ffffff; --surface: #f4f6f2; --line: #dde4da; --text: #0b110d; --muted: #5a675e;
-  --green: #b6f2a2; --green-ink: #1f6b12; --orange: #e8590c;
+  --green: #b6f2a2; --green-ink: #1f6b12; --orange: #e8590c; --thumb: #c3cdc0;
 }
 .dark {
   --bg: #070b08; --surface: #0e1510; --line: #1f2c23; --text: #f2f5f0; --muted: #8a998e;
-  --green: #b6f2a2; --green-ink: #b6f2a2; --orange: #ff7a2b;
+  --green: #b6f2a2; --green-ink: #b6f2a2; --orange: #ff7a2b; --thumb: #2f4235;
   color-scheme: dark;
 }
 
@@ -21,6 +21,22 @@
   --color-green-ink: var(--green-ink); --color-orange: var(--orange);
 }
 
+/* Themed scrollbars (page, dialogs, textareas). Firefox + modern Chrome/Safari use the standard
+   properties; older WebKit gets the pseudo-elements. Touch devices keep their slim overlay bars. */
+* { scrollbar-width: thin; scrollbar-color: var(--thumb) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--thumb); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+body { overflow-x: clip; } /* never let the page scroll sideways */
+
 body { background: var(--bg); color: var(--text); font-family: var(--font-sans); }
 :focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Spot strip: two identical halves, shifted by half the track for a seamless loop. Pauses on hover. */
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee { overflow: hidden; }
+.marquee-track { display: flex; width: max-content; animation: marquee 60s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .marquee { overflow-x: auto; } .marquee-dup { display: none; } }
