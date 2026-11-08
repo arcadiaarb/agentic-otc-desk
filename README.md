@@ -2,6 +2,8 @@
 
 > *"Confidential Intents makes transactions private. We make finding and negotiating them private too."*
 
+*This project is licensed under the MIT License.*
+
 ## What is Tacet?
 
 **Tacet** is a private, peer-to-peer Over-The-Counter (OTC) negotiation desk built on NEAR. 
@@ -52,3 +54,17 @@ Instead of posting a public listing, Tacet hides your true intent inside a secur
 *Built for the Near Hackathon.*
 
 *“Silence is golden. Trade in it.”*
+
+## To Run
+To Run a Copy of this repo on your local machine
+
+```bash
+# Clone This Repo, whatever the current name is
+git clone https://github.com/arcardiaarb/agent-otc-desk
+# Enter the folder
+cd agent-otc-desk
+# Install Dependencies
+npm install
+# Run Dev
+npm run dev
+```

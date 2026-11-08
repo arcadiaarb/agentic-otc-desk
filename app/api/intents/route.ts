@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { db } from "@/lib/firebase";
 import { commit, encryptPrivate, newSalt } from "@/lib/crypto";
-import { EXPIRY_MS, PAIRS, SIZES } from "@/lib/intents";
+import { EXPIRY_MS, PAIRS, SIZES, fitsSize } from "@/lib/intents";
+import { num, sessionAccount } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +34,8 @@ export async function POST(req: Request) {
   let b: Record<string, unknown>;
   try { b = await req.json(); } catch { return fail("Invalid request."); }
 
-  const { pair, size, expiry, accountId } = b;
-  const num = (v: unknown) => (typeof v === "string" && v.length <= 32 && Number(v) > 0 && Number.isFinite(Number(v)) ? v.trim() : null);
+  const { pair, size, expiry } = b;
+  const accountId = sessionAccount(req);
   const amount = num(b.amount), price = num(b.price);
   const note = typeof b.note === "string" ? b.note.trim().slice(0, 500) : "";
 
@@ -42,7 +43,10 @@ export async function POST(req: Request) {
   if (typeof size !== "string" || !SIZES.includes(size)) return fail("Choose a valid size category.");
   if (typeof expiry !== "string" || !(expiry in EXPIRY_MS)) return fail("Choose how long the listing stays open.");
   if (!amount || !price) return fail("Enter an exact amount and price greater than zero.");
-  if (typeof accountId !== "string" || !/^[a-z0-9._-]{2,64}$/.test(accountId)) return fail("Connect a wallet to submit.");
+  if (!accountId) return fail("Sign in with your wallet to submit.", 401);
+  const total = Number(amount) * Number(price);
+  if (!fitsSize(size, total))
+    return fail(`Your amount × price comes to about ${total.toLocaleString("en", { maximumFractionDigits: 2 })} ${pair.split(" / ")[1]}, which doesn't fit “${size}”. Go back and pick the matching size range.`);
 
   try {
     const id = randomUUID();

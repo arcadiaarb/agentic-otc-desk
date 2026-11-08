@@ -11,3 +11,15 @@
 - sellerAccount: string
 - payloadEnc: string (AES-256-GCM blob: amount, price, note, salt)
 - createdAt: Timestamp
+
+`rooms/{id}` (server only)
+- intentId, pair, sizeBucket, sellerAccount, buyerAccount: string
+- status: "negotiating" | "agreed" | "no_deal" | "closed"
+- turn: "seller" | "buyer", turnCount: number, busyUntil: number (ms lock)
+- agreement: { pair, amount, price, nonce, intentId } | null
+- createdAt, updatedAt: Timestamp
+- `messages/{auto}`: n, from, kind, text, price|null, ai, at
+
+`room_private/{id}` (server only)
+- payloadEnc: string (buyer's encrypted amount and max price)
+- createdAt: Timestamp

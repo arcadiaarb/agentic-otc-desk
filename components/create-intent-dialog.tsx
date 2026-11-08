@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { useWallet } from "./wallet-provider";
-import { EXPIRIES, PAIRS, SIZES } from "@/lib/intents";
+import { EXPIRIES, PAIRS, SIZES, fitsSize } from "@/lib/intents";
 import { btnGhost, btnPrimary } from "@/lib/ui";
+import { TotalLine } from "./total-line";
 
 type Step = "public" | "private" | "done";
 const field = "w-full rounded-xl border border-line bg-bg px-3.5 py-3 text-sm placeholder:text-muted/60";
@@ -29,7 +30,7 @@ function Select({ label, value, onChange, options, placeholder }: {
 }
 
 export function CreateIntentButton({ className = btnPrimary, children = "Create Intent", onCreated }: { className?: string; children?: ReactNode; onCreated?: () => void }) {
-  const { accountId, connect } = useWallet();
+  const { accountId, signedIn, connect, signIn, authError } = useWallet();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("public");
   const [pub, setPub] = useState({ pair: "", size: "", expiry: "" });
@@ -63,10 +64,12 @@ export function CreateIntentButton({ className = btnPrimary, children = "Create 
     }
     setSubmitting(true); setError("");
     try {
+      // Prove wallet ownership first (a wallet popup); the server trusts only the signed session.
+      if (!signedIn && !(await signIn())) throw new Error(authError || "Sign the message in your wallet to continue.");
       // Private details go to the server only; the response carries just the id and commitment.
       const res = await fetch("/api/intents", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...pub, ...priv, accountId }),
+        body: JSON.stringify({ ...pub, ...priv }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Could not list your intent. Try again.");
       setPriv({ amount: "", price: "", note: "" });
@@ -119,6 +122,10 @@ export function CreateIntentButton({ className = btnPrimary, children = "Create 
                   <span className="mb-1.5 block text-sm text-muted">Exact price ({quote} per {base})</span>
                   <input className={field} type="number" inputMode="decimal" min="0" step="any" autoComplete="off" placeholder="0.00" value={priv.price} onChange={(e) => setPriv({ ...priv, price: e.target.value })} />
                 </label>
+                <TotalLine amount={priv.amount} price={priv.price} quote={quote} verb="You expect to receive at least" />
+                {Number(priv.amount) > 0 && Number(priv.price) > 0 && !fitsSize(pub.size, Number(priv.amount) * Number(priv.price)) && (
+                  <p role="alert" className="text-sm text-orange">That total doesn&apos;t fit “{pub.size}”. Go back and pick the matching size range.</p>
+                )}
                 <label className="block">
                   <span className="mb-1.5 block text-sm text-muted">Note (optional)</span>
                   <textarea className={`${field} min-h-24 resize-y`} autoComplete="off" placeholder="Anything the buyer should know" value={priv.note} onChange={(e) => setPriv({ ...priv, note: e.target.value })} />

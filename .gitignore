@@ -1,8 +1,7 @@
 node_modules
 .next
 next-env.d.ts
-ignoregit
 
 .env.local
-
 Agent.md
+ignoregit

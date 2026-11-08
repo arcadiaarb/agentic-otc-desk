@@ -12,14 +12,14 @@ function key(): Buffer {
 export const newSalt = () => randomBytes(16).toString("hex");
 
 // "v1:" prefix leaves room for key rotation later.
-export function encryptPrivate(d: PrivateDetails): string {
+export function seal(d: unknown): string {
   const iv = randomBytes(12);
   const c = createCipheriv("aes-256-gcm", key(), iv);
   const ct = Buffer.concat([c.update(JSON.stringify(d), "utf8"), c.final()]);
   return "v1:" + Buffer.concat([iv, c.getAuthTag(), ct]).toString("base64");
 }
 
-export function decryptPrivate(blob: string): PrivateDetails {
+export function unseal<T = unknown>(blob: string): T {
   if (!blob.startsWith("v1:")) throw new Error("Unknown payload version");
   const raw = Buffer.from(blob.slice(3), "base64");
   const d = createDecipheriv("aes-256-gcm", key(), raw.subarray(0, 12));
@@ -31,3 +31,6 @@ export function decryptPrivate(blob: string): PrivateDetails {
 export function commit(intentId: string, pair: string, d: PrivateDetails): string {
   return createHash("sha256").update(JSON.stringify([d.salt, intentId, pair, d.amount, d.price, d.note])).digest("hex");
 }
+
+export const encryptPrivate = (d: PrivateDetails) => seal(d);
+export const decryptPrivate = (blob: string) => unseal<PrivateDetails>(blob);
