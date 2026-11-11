@@ -40,3 +40,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-sans);
 .marquee-track { display: flex; width: max-content; animation: marquee 60s linear infinite; }
 .marquee:hover .marquee-track { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .marquee { overflow-x: auto; } .marquee-dup { display: none; } }
+
+/* Rolling spinner. Kept on even for reduced motion (small, and it signals progress), just slower. */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { animation: spin 0.8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: spin 2s linear infinite !important; } }

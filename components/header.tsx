@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useWallet } from "./wallet-provider";
 import { btnGreen } from "@/lib/ui";
+import { BusyText } from "./spinner";
 
 const short = (id: string) => (id.length > 18 ? `${id.slice(0, 8)}…${id.slice(-6)}` : id);
 
@@ -49,7 +50,7 @@ export function Header() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <span title={accountId} className="rounded-full border border-line px-3.5 py-2 text-sm">{short(accountId)}</span>
-              {!signedIn && <button onClick={signIn} disabled={signingIn} className={btnGreen}>{signingIn ? "Signing…" : "Sign in"}</button>}
+              {!signedIn && <button onClick={signIn} disabled={signingIn} className={btnGreen}>{signingIn ? <BusyText text="Signing…" /> : "Sign in"}</button>}
               <button onClick={() => { setMenu(false); disconnect(); }} className="text-sm text-muted transition-colors hover:text-text">Disconnect</button>
             </div>
             {authError && <p role="alert" className="max-w-64 text-xs text-orange">{authError}</p>}

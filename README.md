@@ -59,12 +59,13 @@ Instead of posting a public listing, Tacet hides your true intent inside a secur
 To Run a Copy of this repo on your local machine
 
 ```bash
-# Clone This Repo, whatever the current name is
-git clone https://github.com/arcardiaarb/agent-otc-desk
+# Clone This Repo,or whatever the current name is
+git clone https://github.com/arcardiaarb/agentic-otc-desk
 # Enter the folder
-cd agent-otc-desk
+cd agentic-otc-desk
 # Install Dependencies
 npm install
+# Create .env.local, copy and pass the values of .env.example into it
 # Run Dev
 npm run dev
 ```

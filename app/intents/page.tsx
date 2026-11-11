@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CreateIntentButton } from "@/components/create-intent-dialog";
 import { IntentCard } from "@/components/intent-card";
 import { RequestNegotiationButton } from "@/components/request-negotiation";
+import { PageSpinner } from "@/components/spinner";
 import { timeLeft, type PublicIntent } from "@/lib/intents";
 
 export default function Intents() {
@@ -23,7 +24,7 @@ export default function Intents() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 60000); // pick up listings from other users
+    const t = setInterval(load, 30000); // pick up listings from other users
     return () => clearInterval(t);
   }, [load]);
 
@@ -41,7 +42,7 @@ export default function Intents() {
           {error} <button className="underline" onClick={load}>Retry</button>
         </p>
       )}
-      {intents === null && !error && <p className="mt-6 text-muted">Loading intents…</p>}
+      {intents === null && !error && <PageSpinner />}
       {intents?.length === 0 && <p className="mt-6 text-muted">No open intents yet. Create the first one.</p>}
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {intents?.map((i) => {

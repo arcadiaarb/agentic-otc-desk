@@ -4,6 +4,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { db } from "@/lib/firebase";
 import { commit, encryptPrivate, newSalt } from "@/lib/crypto";
 import { EXPIRY_MS, PAIRS, SIZES, fitsSize } from "@/lib/intents";
+import { cleanupIfDue } from "@/lib/cleanup";
 import { num, sessionAccount } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ const fail = (error: string, status = 400) => NextResponse.json({ error }, { sta
 
 // Public board: metadata + commitment only. Never touches intent_private.
 export async function GET() {
+  cleanupIfDue(); // housekeeping: removes expired intents in the background, at most every 30 min
   try {
     // Single-field filter only, so no composite index is needed. Status and sort happen in code.
     const snap = await db().collection("intents").where("expiresAt", ">", Timestamp.now()).limit(100).get();

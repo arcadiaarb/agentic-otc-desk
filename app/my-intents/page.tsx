@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { CreateIntentButton } from "@/components/create-intent-dialog";
+import { BusyText, PageSpinner } from "@/components/spinner";
 import { useWallet } from "@/components/wallet-provider";
 import { timeLeft } from "@/lib/intents";
 import { btnGhost, btnGreen } from "@/lib/ui";
@@ -47,7 +48,7 @@ export default function MyIntents() {
     }
   };
 
-  if (checking) return <p className="pt-10 text-muted">Loading…</p>;
+  if (checking) return <PageSpinner />;
   if (!signedIn) {
     return (
       <section className="pt-10">
@@ -55,7 +56,7 @@ export default function MyIntents() {
         <p className="mt-3 max-w-md text-muted">Sign in with your wallet to manage your intents and negotiations.</p>
         {authError && <p role="alert" className="mt-3 text-sm text-orange">{authError}</p>}
         <button className={`${btnGreen} mt-6`} disabled={signingIn} onClick={accountId ? signIn : connect}>
-          {accountId ? (signingIn ? "Signing…" : "Sign in") : "Connect Wallet"}
+          {accountId ? (signingIn ? <BusyText text="Signing…" /> : "Sign in") : "Connect Wallet"}
         </button>
       </section>
     );
@@ -68,7 +69,7 @@ export default function MyIntents() {
         <CreateIntentButton onCreated={load} />
       </div>
       {error && <p role="alert" className="mt-4 text-sm text-orange">{error}</p>}
-      {intents === null && !error && <p className="mt-6 text-muted">Loading…</p>}
+      {intents === null && !error && <PageSpinner />}
       {intents?.length === 0 && <p className="mt-6 text-muted">You haven&apos;t listed anything yet.</p>}
       <ul className="mt-6 space-y-3">
         {intents?.map((i) => (
@@ -80,7 +81,7 @@ export default function MyIntents() {
                 {label(i) === "open" && ` · expires in ${timeLeft(i.expiresAt)}`}
               </p>
             </div>
-            <button className={btnGhost} disabled={deleting === i.id} onClick={() => remove(i)}>{deleting === i.id ? "Deleting…" : "Delete"}</button>
+            <button className={btnGhost} disabled={deleting === i.id} onClick={() => remove(i)}>{deleting === i.id ? <BusyText text="Deleting…" tone="orange" /> : "Delete"}</button>
           </li>
         ))}
       </ul>

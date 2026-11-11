@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CreateIntentButton } from "@/components/create-intent-dialog";
+import { BusyText, Spinner } from "@/components/spinner";
 import { useWallet } from "@/components/wallet-provider";
 import { sizeForTotal } from "@/lib/intents";
 import cfg from "@/lib/pairs.json";
-import { btnGhost, btnGreen, btnPrimary, fieldCls } from "@/lib/ui";
+import { btnGhost, btnGreen, btnPrimary, chipCls, fieldCls } from "@/lib/ui";
 
 type Fields = { pair?: string; amount?: string; price?: string; expiry?: string; note?: string; noteDone?: boolean };
 type Bubble = { who: "agent" | "me"; text: string };
@@ -103,7 +104,7 @@ export default function Create() {
   const hasPartial = !!(fields.pair || fields.amount || fields.price || fields.expiry);
 
   return (
-    <section className="mx-auto max-w-2xl pt-10">
+    <section className="mx-auto -mb-24 flex min-h-[calc(100dvh-5rem)] max-w-2xl flex-col pt-10">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="font-display text-2xl font-medium tracking-tight">Create intent with AI</h1>
         <span className="text-sm text-muted" aria-live="off">
@@ -111,7 +112,7 @@ export default function Create() {
         </span>
       </div>
 
-      <div className="mt-6 space-y-3 rounded-2xl border border-line bg-surface p-4 sm:p-5" aria-live="polite">
+      <div className="mt-6 flex-1 space-y-3 rounded-2xl border border-line bg-surface p-4 sm:p-5" aria-live="polite">
         {bubbles.map((m, i) => (
           <div key={i} className={`flex ${m.who === "agent" ? "justify-start" : "justify-end"}`}>
             <div className={`max-w-[88%] whitespace-pre-line rounded-2xl border px-4 py-3 text-sm ${m.who === "agent" ? "border-green/40" : "border-line"}`}>
@@ -120,11 +121,11 @@ export default function Create() {
             </div>
           </div>
         ))}
-        {busy && <p className="py-1 text-xs text-muted">Thinking…</p>}
+        {busy && <div className="py-1"><Spinner className="size-4" label="Thinking" /></div>}
         {!over && !done && chips.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-1">
             {chips.map((c) => (
-              <button key={c} disabled={!signedIn || busy} onClick={() => send(c)} className="rounded-full border border-line px-3.5 py-1.5 text-sm transition-colors hover:border-green disabled:opacity-50">{c}</button>
+              <button key={c} disabled={!signedIn || busy} onClick={() => send(c)} className={chipCls}>{c}</button>
             ))}
           </div>
         )}
@@ -146,18 +147,18 @@ export default function Create() {
           </dl>
           <div className="mt-5 flex justify-end gap-3">
             <button className={btnGhost} onClick={cancel} disabled={busy}>Cancel</button>
-            <button className={btnPrimary} onClick={submit} disabled={busy}>{busy ? "Submitting…" : "Submit"}</button>
+            <button className={btnPrimary} onClick={submit} disabled={busy}>{busy ? <BusyText text="Submitting…" /> : "Submit"}</button>
           </div>
         </div>
       )}
 
-      <div className="mt-6">
+      <div className="sticky bottom-0 z-10 mt-4 bg-bg pb-5 pt-3">
         {checking ? null : !signedIn ? (
           <div>
             <p className="text-sm text-muted">Sign in with your wallet to send messages.</p>
             {authError && <p role="alert" className="mt-2 text-sm text-orange">{authError}</p>}
             <button className={`${btnGreen} mt-3`} disabled={signingIn} onClick={accountId ? signIn : connect}>
-              {accountId ? (signingIn ? "Signing…" : "Sign in") : "Connect Wallet"}
+              {accountId ? (signingIn ? <BusyText text="Signing…" /> : "Sign in") : "Connect Wallet"}
             </button>
           </div>
         ) : done ? (

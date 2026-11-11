@@ -8,6 +8,7 @@ import { useWallet } from "./wallet-provider";
 import { EXPIRIES, PAIRS, SIZES, fitsSize } from "@/lib/intents";
 import { btnGhost, btnPrimary } from "@/lib/ui";
 import { TotalLine } from "./total-line";
+import { BusyText } from "./spinner";
 import { SpotHint } from "./spot-hint";
 
 type Step = "public" | "private" | "done";
@@ -136,7 +137,7 @@ export function CreateIntentButton({ className = btnPrimary, children = "Create 
               {error && <p role="alert" className="mt-4 text-sm text-orange">{error}</p>}
               <div className="mt-7 flex justify-end gap-3">
                 <button className={btnGhost} onClick={() => { setError(""); setStep("public"); }}>Back</button>
-                <button className={btnPrimary} onClick={submit} disabled={submitting}>{submitting ? "Submitting…" : "Submit"}</button>
+                <button className={btnPrimary} onClick={submit} disabled={submitting}>{submitting ? <BusyText text="Submitting…" /> : "Submit"}</button>
               </div>
             </>
           )}

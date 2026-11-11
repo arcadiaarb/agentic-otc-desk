@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { BusyText, PageSpinner } from "@/components/spinner";
 import { useWallet } from "@/components/wallet-provider";
 import { btnGreen } from "@/lib/ui";
 
@@ -49,20 +50,20 @@ export default function Room() {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [view?.messages.length]);
 
-  if (checking) return <p className="pt-10 text-muted">Loading…</p>;
+  if (checking) return <PageSpinner />;
   if (!signedIn) {
     return (
       <section className="pt-10">
         <h1 className="font-display text-3xl font-medium tracking-tight">Private room</h1>
         <p className="mt-3 max-w-md text-muted">Sign in with the wallet that belongs to this negotiation.</p>
         <button className={`${btnGreen} mt-6`} disabled={signingIn} onClick={accountId ? signIn : connect}>
-          {accountId ? (signingIn ? "Signing…" : "Sign in") : "Connect Wallet"}
+          {accountId ? (signingIn ? <BusyText text="Signing…" /> : "Sign in") : "Connect Wallet"}
         </button>
       </section>
     );
   }
   if (error && !view) return <p role="alert" className="pt-10 text-orange">{error} <Link href="/my-intents" className="underline">Back to My Intents</Link></p>;
-  if (!view) return <p className="pt-10 text-muted">Opening room…</p>;
+  if (!view) return <PageSpinner />;
 
   const [base, quote] = view.pair.split(" / ");
   const live = view.status === "negotiating";

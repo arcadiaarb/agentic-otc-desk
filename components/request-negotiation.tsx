@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useWallet } from "./wallet-provider";
 import type { CardIntent } from "./intent-card";
-import { btnGhost, btnPrimary, fieldCls } from "@/lib/ui";
+import { btnAction, btnGhost, btnPrimary, fieldCls } from "@/lib/ui";
 import { TotalLine } from "./total-line";
+import { BusyText } from "./spinner";
 import { SpotHint } from "./spot-hint";
 import { SIZE_RANGE } from "@/lib/intents";
 
@@ -52,7 +53,7 @@ export function RequestNegotiationButton({ intent }: { intent: CardIntent }) {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <button className={`${btnGhost} w-full`} onClick={start}>Request Negotiation</button>
+      <button className={`${btnAction} w-full`} onClick={start}>Request Negotiation</button>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/65" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-line bg-surface p-6 shadow-2xl">
@@ -88,7 +89,7 @@ export function RequestNegotiationButton({ intent }: { intent: CardIntent }) {
           {error && <p role="alert" className="mt-4 text-sm text-orange">{error}</p>}
           <div className="mt-7 flex justify-end gap-3">
             <button className={btnGhost} onClick={() => setOpen(false)}>Cancel</button>
-            <button className={btnPrimary} onClick={submit} disabled={busy || (over && !ack)}>{busy ? "Opening…" : "Start negotiation"}</button>
+            <button className={btnPrimary} onClick={submit} disabled={busy || (over && !ack)}>{busy ? <BusyText text="Opening…" /> : "Start negotiation"}</button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
