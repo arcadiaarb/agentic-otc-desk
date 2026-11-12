@@ -7,6 +7,7 @@ export async function cleanupExpired(max = 200) {
   const snap = await fs.collection("intents").where("expiresAt", "<", Timestamp.now()).limit(max).get();
   let deleted = 0, roomsClosed = 0;
   for (const d of snap.docs) {
+    if (d.data().status === "pending") continue; // a deal is being signed
     const rooms = await fs.collection("rooms").where("intentId", "==", d.id).get();
     const batch = fs.batch();
     for (const r of rooms.docs) if (r.data().status === "negotiating") { batch.update(r.ref, { status: "closed", busyUntil: 0 }); roomsClosed++; }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CreateIntentButton } from "@/components/create-intent-dialog";
 import { BusyText, Spinner } from "@/components/spinner";
+import { FundsCheck } from "@/components/funds-check";
 import { useWallet } from "@/components/wallet-provider";
 import { sizeForTotal } from "@/lib/intents";
 import cfg from "@/lib/pairs.json";
@@ -33,6 +34,7 @@ export default function Create() {
   const [done, setDone] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [fundsOk, setFundsOk] = useState(false);
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
   const endRef = useRef<HTMLDivElement>(null);
@@ -145,9 +147,10 @@ export default function Create() {
             {row("Open for", fields.expiry ?? "")}
             {fields.note ? row("Note (private)", fields.note.length > 60 ? `${fields.note.slice(0, 60)}…` : fields.note) : null}
           </dl>
+          {signedIn && <div className="mt-4"><FundsCheck pair={fields.pair ?? ""} amount={fields.amount ?? ""} onChange={setFundsOk} /></div>}
           <div className="mt-5 flex justify-end gap-3">
             <button className={btnGhost} onClick={cancel} disabled={busy}>Cancel</button>
-            <button className={btnPrimary} onClick={submit} disabled={busy}>{busy ? <BusyText text="Submitting…" /> : "Submit"}</button>
+            <button className={btnPrimary} onClick={submit} disabled={busy || (signedIn && !fundsOk)}>{busy ? <BusyText text="Submitting…" /> : "Submit"}</button>
           </div>
         </div>
       )}

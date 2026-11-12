@@ -3,13 +3,14 @@ import { randomBytes } from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { db } from "./firebase";
 import { decryptPrivate, seal, unseal } from "./crypto";
+import { sellerFunds } from "./funds";
 import { MAX_TURNS, agentMove, meets, prec, type Role } from "./negotiation";
 
 export type Agreement = { pair: string; amount: string; price: string; nonce: string; intentId: string };
 export type RoomDoc = {
   intentId: string; pair: string; sizeBucket: string; sellerAccount: string; buyerAccount: string;
   status: "negotiating" | "agreed" | "no_deal" | "closed"; turn: Role; turnCount: number; busyUntil: number;
-  agreement: Agreement | null; amountsEnc?: string; createdAt: Timestamp; updatedAt: Timestamp;
+  agreement: Agreement | null; amountsEnc?: string; agreedAtMs?: number; createdAt: Timestamp; updatedAt: Timestamp;
 };
 type MsgDoc = { n: number; from: Role | "system"; kind: "propose" | "accept" | "walk" | "system"; text: string; price: number | null; ai: boolean; at: Timestamp };
 
@@ -90,6 +91,16 @@ export async function stepRoom(id: string) {
         ? { action: "walk" as const, text: "We couldn't find a price that works for both sides.", ai: false, price: undefined }
         : await agentMove({ role, pair: room.pair, limit, amount: Number(mine.amount), note: mine.note, own, other: their, turn: room.turnCount, history: brief });
 
+    if (move.action === "accept") {
+      const dealAmount = String(prec(Math.min(Number(seller.amount), Number(buyer.amount))));
+      try {
+        if (!(await sellerFunds(room.sellerAccount, room.pair, dealAmount)).enough) {
+          await fs.collection("intents").doc(room.intentId).update({ status: "unfunded" });
+          return await finish("closed", "The seller's funds are no longer available, so this deal can't go ahead.", msgs.length);
+        }
+      } catch (e) { console.error("funds check", e instanceof Error ? e.message : e); } // fail open: signing re-checks
+    }
+
     const now = Timestamp.now();
     const b = fs.batch();
     b.set(ref.collection("messages").doc(), { n: msgs.length, from: role, kind: move.action, text: move.text, price: move.action === "propose" ? move.price ?? null : null, ai: move.ai, at: now });
@@ -100,7 +111,8 @@ export async function stepRoom(id: string) {
       upd.status = "agreed";
       upd.amountsEnc = seal({ seller: seller.amount, buyer: buyer.amount });
       upd.agreement = { pair: room.pair, amount: String(prec(Math.min(Number(seller.amount), Number(buyer.amount)))), price: String(their), nonce: randomBytes(16).toString("hex"), intentId: room.intentId } satisfies Agreement;
-      b.update(fs.collection("intents").doc(room.intentId), { status: "closed" }); // sold: off the board
+      upd.agreedAtMs = Date.now();
+      b.update(fs.collection("intents").doc(room.intentId), { status: "pending" }); // reserved while the two sides sign
     }
     b.update(ref, upd);
     await b.commit();

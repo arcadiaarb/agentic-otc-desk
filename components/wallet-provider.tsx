@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { WalletSelector, WalletSelectorState } from "@near-wallet-selector/core";
+import type { Wallet, WalletSelector, WalletSelectorState } from "@near-wallet-selector/core";
+import { NETWORK } from "@/lib/network";
 import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 import "@near-wallet-selector/modal-ui/styles.css";
 
@@ -16,10 +17,11 @@ type WalletCtx = {
   connect: () => void;
   disconnect: () => Promise<void>;
   signIn: () => Promise<boolean>;
+  getWallet: () => Promise<Wallet | null>;
 };
 const Ctx = createContext<WalletCtx>({
   accountId: null, signedIn: false, checking: true, ready: false, signingIn: false, authError: "",
-  connect: () => {}, disconnect: async () => {}, signIn: async () => false,
+  connect: () => {}, disconnect: async () => {}, signIn: async () => false, getWallet: async () => null,
 });
 export const useWallet = () => useContext(Ctx);
 
@@ -45,8 +47,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           import("@near-wallet-selector/meteor-wallet"),
           import("@near-wallet-selector/here-wallet"),
         ]);
-      // Mainnet: NEAR Intents has no testnet.
-      const s = await setupWalletSelector({ network: "mainnet", modules: [setupMyNearWallet(), setupMeteorWallet(), setupHereWallet()] });
+      // NETWORK comes from NEXT_PUBLIC_NEAR_NETWORK (testnet by default).
+      const s = await setupWalletSelector({ network: NETWORK, modules: [setupMyNearWallet(), setupMeteorWallet(), setupHereWallet()] });
       if (cancelled) return;
       selector.current = s;
       modal.current = setupModal(s, { contractId: "", theme: "dark" });
@@ -99,6 +101,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [fetchChallenge]);
 
   const connect = useCallback(() => modal.current?.show(), []);
+  const getWallet = useCallback(async () => (selector.current ? await selector.current.wallet().catch(() => null) : null), []);
   const disconnect = useCallback(async () => {
     fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     setSession(null);
@@ -109,7 +112,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<WalletCtx>(() => ({
     accountId, signedIn: !!accountId && session === accountId, checking: !ready || session === undefined,
-    ready, signingIn, authError, connect, disconnect, signIn,
-  }), [accountId, session, ready, signingIn, authError, connect, disconnect, signIn]);
+    ready, signingIn, authError, connect, disconnect, signIn, getWallet,
+  }), [accountId, session, ready, signingIn, authError, connect, disconnect, signIn, getWallet]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

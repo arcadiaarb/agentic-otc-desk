@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BusyText, PageSpinner } from "@/components/spinner";
 import { useWallet } from "@/components/wallet-provider";
-import { btnGreen } from "@/lib/ui";
+import { btnAction, btnGreen } from "@/lib/ui";
 
 type Msg = { n: number; from: "seller" | "buyer" | "system"; kind: string; text: string; price: number | null; ai?: boolean };
 type View = {
@@ -19,6 +19,7 @@ const STATUS = { negotiating: "Negotiating", agreed: "Deal agreed", no_deal: "No
 
 export default function Room() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { signedIn, accountId, checking, signingIn, connect, signIn } = useWallet();
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState("");
@@ -49,6 +50,10 @@ export default function Room() {
   }, [id, signedIn]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [view?.messages.length]);
+  // An agreement opens the settlement page by itself. "?stay=1" (used by the link back from there) keeps you here.
+  useEffect(() => {
+    if (view?.status === "agreed" && !new URLSearchParams(window.location.search).has("stay")) router.replace(`/psettlement/${id}`);
+  }, [view?.status, id, router]);
 
   if (checking) return <PageSpinner />;
   if (!signedIn) {
@@ -118,7 +123,7 @@ export default function Room() {
                 : <>Partial sale: you listed {fmt(view.yourAmount)} {base}, and this deal covers {fmt(view.agreement.amount)}. The intent is now closed, so <Link href="/intents" className="underline">list the rest as a new intent</Link>.</>}
             </p>
           )}
-          <p className="mt-4 text-sm text-muted">Signing and settlement through 1Click come in the next phase.</p>
+          <Link href={`/psettlement/${id}`} className={`${btnAction} mt-5`}>Go to settlement</Link>
         </div>
       )}
       {view.status === "no_deal" && <p className="mt-6 text-sm text-muted">The agents couldn&apos;t find a price that works for both sides.</p>}

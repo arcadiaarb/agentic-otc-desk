@@ -10,6 +10,7 @@
  *   npx tsx scripts/p2p-proof.ts simulate   build + sign the trade and ask the verifier to simulate it (no changes)
  *   npx tsx scripts/p2p-proof.ts trade      do it for real, then check the balances moved exactly as expected
  *   npx tsx scripts/p2p-proof.ts selftest   offline check that signing works (no network)
+ *   npx tsx scripts/p2p-proof.ts relayer    print a fresh gas-payer account for RELAYER_ACCOUNT_ID / RELAYER_PRIVATE_KEY (saves nothing)
  * Options: --amount 1 (wNEAR)  --price 3 (USDC per wNEAR)  --dry (trade: stop before submitting)
  * Keys live in .proof/keys.json (git-ignored). NEVER put a mainnet key here.
  */
@@ -202,6 +203,12 @@ const cmds: Record<string, () => Promise<void>> = {
     const ok = after.sW === before.sW - t.amount && after.sU === before.sU + t.total && after.bW === before.bW + t.amount && after.bU === before.bU - t.total;
     console.log(ok ? "\n✓ PASS: both sides moved by exactly the agreed amounts, in one atomic transaction.\n" : "\n✗ Balances did not move exactly as planned. Check the tx link above (a fee or a failed receipt?).\n");
     if (!ok) process.exit(1);
+  },
+  async relayer() {
+    const a = newAcct();
+    console.log(`\nPut these in .env.local (the key is shown once and not saved anywhere):\n\nRELAYER_ACCOUNT_ID=${a.accountId}\nRELAYER_PRIVATE_KEY=${a.secretKey}\n`);
+    console.log("Then send a little NEAR to that account ID so it exists and can pay gas (testnet: the docs faucet; mainnet: about 1 to 2 NEAR).");
+    console.log("It only pays gas to submit trades. It can't move anyone's funds. Never put tokens in it.\n");
   },
   async selftest() {
     mkdirSync(".proof", { recursive: true });

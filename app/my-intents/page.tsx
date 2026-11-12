@@ -6,10 +6,10 @@ import { CreateIntentButton } from "@/components/create-intent-dialog";
 import { BusyText, PageSpinner } from "@/components/spinner";
 import { useWallet } from "@/components/wallet-provider";
 import { timeLeft } from "@/lib/intents";
-import { btnGhost, btnGreen } from "@/lib/ui";
+import { btnAction, btnGhost, btnGreen } from "@/lib/ui";
 
 type Mine = { id: string; pair: string; size: string; commitment: string; status: string; expiresAt: string };
-type RoomRow = { id: string; pair: string; role: "seller" | "buyer"; status: string };
+type RoomRow = { id: string; pair: string; role: "seller" | "buyer"; status: string; settlement?: { status: string; deadlineMs: number | null; action: boolean } };
 
 const label = (i: Mine) => (i.status === "open" && Date.parse(i.expiresAt) <= Date.now() ? "expired" : i.status);
 const STATUS: Record<string, string> = { negotiating: "Negotiating", agreed: "Deal agreed", no_deal: "No deal", closed: "Closed" };
@@ -77,7 +77,7 @@ export default function MyIntents() {
             <div>
               <p className="font-display font-medium">{i.pair} <span className="ml-2 font-sans text-sm font-normal text-muted">{i.size}</span></p>
               <p className="mt-1 text-sm text-muted">
-                <span className={label(i) === "open" ? "text-green-ink" : ""}>{label(i)}</span>
+                <span className={label(i) === "open" ? "text-green-ink" : label(i) === "pending" || label(i) === "unfunded" ? "text-orange" : ""}>{label(i) === "pending" ? "deal waiting for signatures" : label(i) === "unfunded" ? "hidden: your tokens are not in the verifier" : label(i)}</span>
                 {label(i) === "open" && ` · expires in ${timeLeft(i.expiresAt)}`}
               </p>
             </div>
@@ -90,11 +90,15 @@ export default function MyIntents() {
       {rooms.length === 0 && <p className="mt-3 text-muted">None yet. Open one from the board, or wait for a buyer.</p>}
       <ul className="mt-4 space-y-3">
         {rooms.map((r) => (
-          <li key={r.id}>
-            <Link href={`/room/${r.id}`} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4 transition-colors hover:border-green">
-              <span className="font-display font-medium">{r.pair} <span className="ml-2 font-sans text-sm font-normal text-muted">you are the {r.role}</span></span>
-              <span className={`text-sm ${r.status === "agreed" ? "text-green-ink" : "text-muted"}`}>{STATUS[r.status] ?? r.status}</span>
-            </Link>
+          <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4">
+            <Link href={`/room/${r.id}?stay=1`} className="font-display font-medium hover:underline">{r.pair} <span className="ml-2 font-sans text-sm font-normal text-muted">you are the {r.role}</span></Link>
+            {r.status === "agreed" && r.settlement && r.settlement.status !== "expired" ? (
+              r.settlement.status === "settled"
+                ? <Link href={`/psettlement/${r.id}`} className="text-sm text-green-ink underline">Settled</Link>
+                : <Link href={`/psettlement/${r.id}`} className={r.settlement.action ? btnAction : btnGhost}>{r.settlement.action ? "Your Signature is Required" : "Waiting for Signature"}</Link>
+            ) : (
+              <span className="text-sm text-muted">{r.settlement?.status === "expired" ? "Signing window ended" : STATUS[r.status] ?? r.status}</span>
+            )}
           </li>
         ))}
       </ul>

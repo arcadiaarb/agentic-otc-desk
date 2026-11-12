@@ -6,12 +6,13 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { useWallet } from "./wallet-provider";
 import { EXPIRIES, PAIRS, SIZES, fitsSize } from "@/lib/intents";
-import { btnGhost, btnPrimary } from "@/lib/ui";
+import { btnAction, btnGhost, btnPrimary } from "@/lib/ui";
+import { FundsCheck } from "./funds-check";
 import { TotalLine } from "./total-line";
 import { BusyText } from "./spinner";
 import { SpotHint } from "./spot-hint";
 
-type Step = "public" | "private" | "done";
+type Step = "public" | "private" | "funds" | "done";
 const field = "w-full rounded-xl border border-line bg-bg px-3.5 py-3 text-sm placeholder:text-muted/60";
 
 function Select({ label, value, onChange, options, placeholder }: {
@@ -40,6 +41,7 @@ export function CreateIntentButton({ className = btnPrimary, children = "Create 
   const [error, setError] = useState("");
   const [awaitingWallet, setAwaitingWallet] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [fundsOk, setFundsOk] = useState(false);
 
   const [base, quote] = pub.pair.split(" / ");
   const publicDone = pub.pair && pub.size && pub.expiry;
@@ -51,8 +53,18 @@ export function CreateIntentButton({ className = btnPrimary, children = "Create 
 
   // After connecting from the submit flow, bring the form back with the draft intact.
   useEffect(() => {
-    if (awaitingWallet && accountId) { setAwaitingWallet(false); setStep("private"); setOpen(true); }
+    if (awaitingWallet && accountId) { setAwaitingWallet(false); setStep("funds"); setOpen(true); }
   }, [awaitingWallet, accountId]);
+
+  // Step 2 -> 3. Connecting a wallet closes the dialog first (its focus trap would block the wallet modal).
+  const goFunds = () => {
+    if (!(Number(priv.amount) > 0) || !(Number(priv.price) > 0)) { setError("Enter an exact amount and price greater than zero."); return; }
+    if (!fitsSize(pub.size, Number(priv.amount) * Number(priv.price))) { setError(`That total doesn't fit “${pub.size}”. Go back and pick the matching size range.`); return; }
+    setError("");
+    if (!accountId) { setAwaitingWallet(true); setOpen(false); connect(); return; }
+    setStep("funds");
+  };
+  const signInHere = async () => { setError(""); if (!(await signIn())) setError(authError || "Sign the message in your wallet to continue."); };
 
   const submit = async () => {
     if (!(Number(priv.amount) > 0) || !(Number(priv.price) > 0)) {
@@ -137,7 +149,29 @@ export function CreateIntentButton({ className = btnPrimary, children = "Create 
               {error && <p role="alert" className="mt-4 text-sm text-orange">{error}</p>}
               <div className="mt-7 flex justify-end gap-3">
                 <button className={btnGhost} onClick={() => { setError(""); setStep("public"); }}>Back</button>
-                <button className={btnPrimary} onClick={submit} disabled={submitting}>{submitting ? <BusyText text="Submitting…" /> : "Submit"}</button>
+                <button className={btnPrimary} onClick={goFunds}>Next</button>
+              </div>
+            </>
+          )}
+
+          {step === "funds" && (
+            <>
+              <Dialog.Title className="flex items-center gap-2.5 font-display text-lg font-medium">
+                <span className="size-2.5 rounded-full bg-orange" aria-hidden />Funds Settlement
+              </Dialog.Title>
+              <Dialog.Description className="mt-1.5 text-sm text-muted">A deal can only settle if your tokens are inside the verifier. They stay yours, and only move when you sign a deal.</Dialog.Description>
+              <div className="mt-6">
+                {signedIn ? <FundsCheck pair={pub.pair} amount={priv.amount} onChange={setFundsOk} /> : (
+                  <div className="rounded-xl border border-dashed border-line p-4 text-sm">
+                    <p className="text-muted">Sign in with your wallet to check your funds.</p>
+                    <button className={`${btnAction} mt-3`} onClick={signInHere}>Sign in</button>
+                  </div>
+                )}
+              </div>
+              {error && <p role="alert" className="mt-4 text-sm text-orange">{error}</p>}
+              <div className="mt-7 flex justify-end gap-3">
+                <button className={btnGhost} onClick={() => { setError(""); setStep("private"); }}>Back</button>
+                <button className={btnPrimary} onClick={submit} disabled={submitting || !signedIn || !fundsOk}>{submitting ? <BusyText text="Submitting…" /> : "Submit"}</button>
               </div>
             </>
           )}

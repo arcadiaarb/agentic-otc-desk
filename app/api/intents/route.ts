@@ -5,6 +5,8 @@ import { db } from "@/lib/firebase";
 import { commit, encryptPrivate, newSalt } from "@/lib/crypto";
 import { EXPIRY_MS, PAIRS, SIZES, fitsSize } from "@/lib/intents";
 import { cleanupIfDue } from "@/lib/cleanup";
+import { sellerFunds } from "@/lib/funds";
+import { SettleError } from "@/lib/settlement";
 import { num, sessionAccount } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +51,16 @@ export async function POST(req: Request) {
   const total = Number(amount) * Number(price);
   if (!fitsSize(size, total))
     return fail(`Your amount × price comes to about ${total.toLocaleString("en", { maximumFractionDigits: 2 })} ${pair.split(" / ")[1]}, which doesn't fit “${size}”. Go back and pick the matching size range.`);
+
+  // The tokens must already be inside the verifier, otherwise the listing could never settle.
+  try {
+    const f = await sellerFunds(accountId, pair, amount);
+    if (!f.enough) return NextResponse.json({ error: `Your funds inside the verifier (${f.inVerifier} ${f.symbol}) don't cover this listing (${f.need} ${f.symbol}). Deposit first.`, code: "insufficient_funds", funds: f }, { status: 409 });
+  } catch (e) {
+    if (e instanceof SettleError) return fail(e.message, e.status);
+    console.error("funds check", e instanceof Error ? e.message : e);
+    return fail("Couldn't check your funds right now. Try again in a moment.", 503);
+  }
 
   try {
     const id = randomUUID();

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { db } from "@/lib/firebase";
-import { encryptPrivate, newSalt } from "@/lib/crypto";
+import { decryptPrivate, encryptPrivate, newSalt } from "@/lib/crypto";
+import { sellerFunds } from "@/lib/funds";
 import { fail, num, sessionAccount } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,15 @@ export async function POST(req: Request) {
     if (!d || !priv.exists || d.status !== "open" || d.expiresAt.toMillis() <= Date.now()) return fail("This intent is no longer open.", 404);
     const seller = priv.data()!.sellerAccount as string;
     if (seller === me) return fail("You can't negotiate on your own intent.");
+
+    // Funds can leave the verifier any time, so check again now. (If the chain can't be reached we let it through; signing re-checks.)
+    try {
+      const f = await sellerFunds(seller, d.pair as string, decryptPrivate(priv.data()!.payloadEnc).amount);
+      if (!f.enough) {
+        await fs.collection("intents").doc(intentId).update({ status: "unfunded" });
+        return fail("This listing isn't funded right now, so it can't be negotiated.", 409);
+      }
+    } catch (e) { console.error("funds check", e instanceof Error ? e.message : e); }
 
     const existing = await fs.collection("rooms").where("buyerAccount", "==", me).where("intentId", "==", intentId).get();
     const live = existing.docs.find((r) => r.data().status === "negotiating");
@@ -61,7 +71,17 @@ export async function GET(req: Request) {
     const rooms = [...s.docs, ...bq.docs]
       .map((r) => { const d = r.data(); return { id: r.id, pair: d.pair as string, role: d.sellerAccount === me ? "seller" : "buyer", status: d.status as string, updatedAt: (d.updatedAt as Timestamp).toMillis() }; })
       .sort((a, b) => b.updatedAt - a.updatedAt);
-    return NextResponse.json({ rooms });
+    const agreed = rooms.filter((r) => r.status === "agreed");
+    const sdocs = agreed.length ? await fs.getAll(...agreed.map((r) => fs.collection("settlements").doc(r.id))) : [];
+    const smap = new Map(sdocs.map((x) => [x.id, x.exists ? x.data() : null]));
+    return NextResponse.json({
+      rooms: rooms.map((r) => {
+        if (r.status !== "agreed") return r;
+        const s = smap.get(r.id), status: string = s?.status ?? "awaiting_buyer";
+        const action = (status === "awaiting_buyer" && r.role === "buyer") || (status === "awaiting_seller" && r.role === "seller");
+        return { ...r, settlement: { status, deadlineMs: (s?.deadlineMs as number | undefined) ?? null, action } };
+      }),
+    });
   } catch (e) {
     console.error("GET /api/rooms", e);
     return fail("Could not load your negotiations.", 500);

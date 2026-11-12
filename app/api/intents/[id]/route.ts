@@ -14,6 +14,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const fs = db();
     const priv = await fs.collection("intent_private").doc(id).get();
     if (!priv.exists || priv.data()?.sellerAccount !== me) return fail("Intent not found.", 404);
+    const pub = await fs.collection("intents").doc(id).get();
+    if (pub.data()?.status === "pending") return fail("A deal on this intent is waiting for signatures. Finish or wait for it to expire first.", 409);
     const rooms = await fs.collection("rooms").where("intentId", "==", id).get();
     const batch = fs.batch();
     rooms.docs.filter((r) => r.data().status === "negotiating").forEach((r) => batch.update(r.ref, { status: "closed", busyUntil: 0 }));
