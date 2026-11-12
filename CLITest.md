@@ -73,3 +73,101 @@ When you run the `trade` command, the script will print the balances before and 
 *   The buyer's balances moved the exact opposite way.
 
 **Success Indicator:** The script will end with **`✓ PASS`**. It will also print a testnet explorer link to the transaction so you can verify it on-chain.
+
+### Example Output
+
+```bash
+
+C:\Users\PC\Desktop\tacet>npx tsx scripts/p2p-proof.ts balances
+
+In each account's wallet (plain tokens, NOT usable for trades until deposited):
+  seller: 2.88612275352112679272448 wNEAR, 0 USDC, 5 NEAR for gas
+  buyer: 0 wNEAR, 10.197816 USDC, 5 NEAR for gas
+
+Inside the verifier (what trades use):
+  seller: 0 wNEAR, 0 USDC
+  buyer:  0 wNEAR, 0 USDC
+
+
+C:\Users\PC\Desktop\tacet>npx tsx scripts/p2p-proof.ts deposit
+
+seller: depositing 2.88612275352112679272448 wNEAR into the verifier...
+  tx: https://testnet.nearblocks.io/txns/5UVnXXvLbNSYN4oxvbuZ3N9RRhRYuTesnN6No4mkRfYX
+
+buyer: depositing 10.197816 USDC into the verifier...
+  tx: https://testnet.nearblocks.io/txns/ALyxGCaBsHvtaaSxeVLFme3D4NTPRoy2hqwX7XfsaxxP
+
+Done. Run `balances` to confirm the funds now show inside the verifier.
+
+
+C:\Users\PC\Desktop\tacet>npx tsx scripts/p2p-proof.ts balances
+
+In each account's wallet (plain tokens, NOT usable for trades until deposited):
+  seller: 0 wNEAR, 0 USDC, 4.999188780562974699999999 NEAR for gas
+  buyer: 0 wNEAR, 0 USDC, 4.999189822698894699999999 NEAR for gas
+
+Inside the verifier (what trades use):
+  seller: 2.88612275352112679272448 wNEAR, 0 USDC
+  buyer:  0 wNEAR, 10.197816 USDC
+
+
+C:\Users\PC\Desktop\tacet>npx tsx scripts/p2p-proof.ts simulate
+
+Signed intents built. Asking the verifier to simulate (nothing changes on chain)...
+{
+  "intents_executed": [
+    {
+      "intent_hash": "EpJEpHKPfrJwkW5SEppWtEa8GHTgVYub2sUQHqEPTjpy",
+      "account_id": "88a2ab19164976707f02bf5978c59b645641bc37d162f7a15f9fefa47d678f5d",
+      "nonce": "/E0Q8T31ODbnNgaLsCEHPq0W26f6il1RmNKMaxyccwg="
+    },
+    {
+      "intent_hash": "4YfhAFG6UDTswr5mjgExo1jdbTtTqbiA11vZHcs2sEaM",
+      "account_id": "b906bcf0b970f853ef04179f5cd007379f92dc73a4013677260c25ad11531186",
+      "nonce": "/E0Q8RYcPp9EdvCpsKVoBveYMEybIghkW7Pm4A4KRUE="
+    }
+  ],
+  "logs": [
+    "EVENT_JSON:{\"standard\":\"dip4\",\"version\":\"0.4.3\",\"event\":\"token_diff\",\"data\":[{\"intent_hash\":\"EpJEpHKPfrJwkW5SEppWtEa8GHTgVYub2sUQHqEPTjpy\",\"account_id\":\"88a2ab19164976707f02bf5978c59b645641bc37d162f7a15f9fefa47d678f5d\",\"diff\":{\"nep141:usdc.tidepool-sandbox.testnet\":\"3000000\",\"nep141:wnear.tidepool-sandbox.testnet\":\"-1000000000000000000000000\"}}]}",
+    "EVENT_JSON:{\"standard\":\"dip4\",\"version\":\"0.4.3\",\"event\":\"token_diff\",\"data\":[{\"intent_hash\":\"4YfhAFG6UDTswr5mjgExo1jdbTtTqbiA11vZHcs2sEaM\",\"account_id\":\"b906bcf0b970f853ef04179f5cd007379f92dc73a4013677260c25ad11531186\",\"diff\":{\"nep141:usdc.tidepool-sandbox.testnet\":\"-3000000\",\"nep141:wnear.tidepool-sandbox.testnet\":\"1000000000000000000000000\"}}]}",
+    "EVENT_JSON:{\"standard\":\"dip4\",\"version\":\"0.4.3\",\"event\":\"intents_executed\",\"data\":[{\"intent_hash\":\"EpJEpHKPfrJwkW5SEppWtEa8GHTgVYub2sUQHqEPTjpy\",\"account_id\":\"88a2ab19164976707f02bf5978c59b645641bc37d162f7a15f9fefa47d678f5d\",\"nonce\":\"/E0Q8T31ODbnNgaLsCEHPq0W26f6il1RmNKMaxyccwg=\"},{\"intent_hash\":\"4YfhAFG6UDTswr5mjgExo1jdbTtTqbiA11vZHcs2sEaM\",\"account_id\":\"b906bcf0b970f853ef04179f5cd007379f92dc73a4013677260c25ad11531186\",\"nonce\":\"/E0Q8RYcPp9EdvCpsKVoBveYMEybIghkW7Pm4A4KRUE=\"}]}"
+  ],
+  "min_deadline": "2026-11-10T23:04:00.918Z",
+  "state": {
+    "fee": 0,
+    "current_salt": "fc4d10f1"
+  }
+}
+
+C:\Users\PC\Desktop\tacet>npx tsx scripts/p2p-proof.ts trade
+
+Plan: seller gives 1 wNEAR, buyer pays 3 USDC (3 per wNEAR)
+Before:
+  seller: 2.88612275352112679272448 wNEAR, 0 USDC
+  buyer:  0 wNEAR, 10.197816 USDC
+
+Submitting execute_intents with both signatures in ONE transaction...
+  tx: https://testnet.nearblocks.io/txns/47HQaLgvniXXzBcDmZDfuLkWPBCQmbfMn1g4e7ECf1cS
+  status: {"SuccessValue":""}
+
+After:
+  seller: 1.88612275352112679272448 wNEAR, 3 USDC
+  buyer:  1 wNEAR, 7.197816 USDC
+
+✓ PASS: both sides moved by exactly the agreed amounts, in one atomic transaction.
+
+
+C:\Users\PC\Desktop\tacet>npx tsx scripts/p2p-proof.ts balances
+
+In each account's wallet (plain tokens, NOT usable for trades until deposited):
+  seller: 0 wNEAR, 0 USDC, 4.998448114775212399999999 NEAR for gas
+  buyer: 0 wNEAR, 0 USDC, 4.999189822698894699999999 NEAR for gas
+
+Inside the verifier (what trades use):
+  seller: 1.88612275352112679272448 wNEAR, 3 USDC
+  buyer:  1 wNEAR, 7.197816 USDC
+
+
+C:\Users\PC\Desktop\tacet>
+
+```
