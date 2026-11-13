@@ -1,5 +1,10 @@
 // One setting switches everything: NEXT_PUBLIC_NEAR_NETWORK=testnet (default) or mainnet. Safe on client and server.
-export type Asset = { id: string; contract: string; decimals: number; symbol: string };
+export type Asset = {
+  id: string; contract: string; decimals: number; symbol: string;
+  walletTransfers?: boolean; // false = bridged token that can't be moved by a NEAR wallet (balance only)
+  native?: boolean;          // native NEAR: wrapped into wNEAR (1:1) before it enters the verifier
+  wrapContract?: string;     // the contract whose near_deposit wraps native NEAR
+};
 
 export const NETWORK: "testnet" | "mainnet" = process.env.NEXT_PUBLIC_NEAR_NETWORK === "mainnet" ? "mainnet" : "testnet";
 
@@ -10,10 +15,12 @@ const TESTNET = {
   explorer: "https://testnet.nearblocks.io",
   rpcs: ["https://rpc.testnet.near.org", "https://rpc.testnet.fastnear.com"],
   tokens: {
-    NEAR: T("wNEAR", "wnear.tidepool-sandbox.testnet", 24),
+    wNEAR: T("wNEAR", "wnear.tidepool-sandbox.testnet", 24),
+    // Native NEAR trades as wNEAR (1:1). The sandbox's wNEAR may not support wrapping; the /verifier page reports that clearly.
+    NEAR: { ...T("wNEAR", "wnear.tidepool-sandbox.testnet", 24), native: true, wrapContract: "wnear.tidepool-sandbox.testnet" },
     ETH: T("ETH", "eth.tidepool-sandbox.testnet", 18),
     wBTC: T("wBTC", "wbtc.tidepool-sandbox.testnet", 8),
-    SOL: T("SOL", "sol.tp-omft.testnet", 9),
+    SOL: { ...T("SOL", "sol.tp-omft.testnet", 9), walletTransfers: false },
     USDC: T("USDC", "usdc.tidepool-sandbox.testnet", 6),
     USDT: T("USDT", "usdt.tidepool-sandbox.testnet", 6),
   } as Record<string, Asset>,

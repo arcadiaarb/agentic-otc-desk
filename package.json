@@ -21,7 +21,6 @@
     "buffer": "^6.0.3",
     "firebase-admin": "^14.5.0",
     "lucide-react": "^1.70.0",
-    "near-seed-phrase": "^0.2.1",
     "near-sign-verify": "^0.4.5",
     "next": "^16.4.5",
     "openai": "^7.53.0",

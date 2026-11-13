@@ -28,6 +28,11 @@ export async function view(contract: string, method: string, args: unknown): Pro
 
 export const verifierBalance = async (account: string, assetId: string) => BigInt(await view(NET.verifier, "mt_balance_of", { account_id: account, token_id: assetId }));
 export const walletBalance = async (account: string, contract: string) => BigInt(await view(contract, "ft_balance_of", { account_id: account }));
+// Bridged tokens may have no NEP-141 contract to ask: that must never break a funds check, it just means "0 in the wallet".
+export const walletBalanceSafe = (account: string, contract: string) => walletBalance(account, contract).catch(() => 0n);
+export async function nativeBalance(account: string): Promise<bigint> {
+  try { return BigInt((await rpc("query", { request_type: "view_account", finality: "optimistic", account_id: account })).amount); } catch { return 0n; }
+}
 export const isImplicit = (id: string) => /^[0-9a-f]{64}$/.test(id);
 
 // Keys the verifier knows for an account. null = couldn't tell (method name differs between verifier versions).

@@ -17,6 +17,6 @@ export async function GET(req: Request) {
   } catch (e) {
     if (e instanceof SettleError) return fail(e.message, e.status);
     console.error("funds", e instanceof Error ? e.message : e);
-    return fail("Couldn't check your funds right now. Try again in a moment.", 503);
+    return fail(`Couldn't check your funds right now: ${(e instanceof Error ? e.message : "unknown error").replace(/\s+/g, " ").slice(0, 140)}`, 503);
   }
 }

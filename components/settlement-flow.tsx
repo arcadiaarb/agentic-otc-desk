@@ -97,7 +97,8 @@ export function SettlementFlow({ roomId }: { roomId: string }) {
       setSignMsg("Saving your signature…");
       const res = await fetch(`/api/settlements/${roomId}/sign`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ publicKey: signed.publicKey, signature: signed.signature }) });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok) { if (d.code === "key_not_registered" && d.publicKey) setNeedKey(d.publicKey); throw new Error(d.error ?? "Could not record your signature."); }
+      if (!res.ok) { if (d.code === "key_not_registered" && d.publicKey) { key.remember(d.publicKey); setNeedKey(d.publicKey); } throw new Error(d.error ?? "Could not record your signature."); }
+      key.remember(signed.publicKey); // the key this wallet really signs with
       setNeedKey("");
       await load();
     } catch (e) {
@@ -133,6 +134,7 @@ export function SettlementFlow({ roomId }: { roomId: string }) {
       <Row k="Amount">{v.amount} {v.baseSymbol}</Row>
       <Row k="Price">{v.price} {v.quoteSymbol} per {v.baseSymbol}</Row>
       <Row k="Total">{v.total} {v.quoteSymbol}</Row>
+      {v.pair.startsWith("NEAR /") && <p className="pt-1 text-xs text-muted">NEAR is settled as wNEAR (wrapped NEAR, 1:1) inside the verifier.</p>}
     </dl>
   );
   const Title = ({ children, sub }: { children: ReactNode; sub?: string }) => (
@@ -216,19 +218,21 @@ export function SettlementFlow({ roomId }: { roomId: string }) {
           <Dots n={2} />
           <Title sub="A one-time step so the verifier accepts your signature.">Register key</Title>
           <div className="mt-4 space-y-3 text-sm">
-            {(key.registered === undefined || key.busy === "check") && <div className="flex items-center gap-2 text-muted"><Spinner className="size-4" /> Checking…</div>}
+            {key.needsProbe && <p className="text-muted">Your wallet will ask for one free signature so we can see which key it signs with, then we register exactly that key.</p>}
+            {!key.needsProbe && (key.registered === undefined || key.busy === "check") && <div className="flex items-center gap-2 text-muted"><Spinner className="size-4" /> Checking…</div>}
             {key.registered === true && <p className="text-green-ink">Your key is registered.</p>}
+            {key.tx && <a href={key.tx} target="_blank" rel="noreferrer" className="text-xs underline">View registration transaction</a>}
             {key.registered === false && <p>Your key isn&apos;t registered yet.</p>}
             {key.registered === null && <p className="text-muted">We couldn&apos;t verify this automatically. You can register to be safe, or continue and we&apos;ll find out when you sign.</p>}
-            {key.pk && <p className="break-all font-mono text-xs text-muted">{key.pk}</p>}
+            {key.signKey && <p className="break-all font-mono text-xs text-muted">{key.signKey}</p>}
             {key.tx && <a href={key.tx} target="_blank" rel="noreferrer" className="text-xs underline">View registration transaction</a>}
             {key.error && <p role="alert" className="text-orange">{key.error}</p>}
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             {key.registered === true && <button className={btnAction} onClick={() => setStep(3)}>Next</button>}
-            {(key.registered === false || key.registered === null) && <button className={btnAction} disabled={!!key.busy} onClick={() => key.register()}>{key.busy === "register" ? <BusyText text="Registering…" /> : "Register"}</button>}
+            {(key.needsProbe || key.registered === false || key.registered === null) && <button className={btnAction} disabled={!!key.busy} onClick={() => key.register()}>{key.busy === "register" ? <BusyText text="Registering…" /> : "Register"}</button>}
             {key.registered === null && <button className={btnGhost} onClick={() => setStep(3)}>Next</button>}
-            {key.registered !== undefined && <button className={btnGhost} disabled={!!key.busy} onClick={() => key.check()}>Check again</button>}
+            {!key.needsProbe && key.registered !== undefined && <button className={btnGhost} disabled={!!key.busy} onClick={() => key.check()}>Check again</button>}
           </div>
         </>
       );

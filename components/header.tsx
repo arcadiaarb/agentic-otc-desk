@@ -42,6 +42,7 @@ export function Header() {
       <nav id="site-nav" className={nav}>
         <Link href="/intents" onClick={() => setMenu(false)} className="text-sm text-muted transition-colors hover:text-text">Intents</Link>
         {signedIn && <Link href="/my-intents" onClick={() => setMenu(false)} className="text-sm text-muted transition-colors hover:text-text">My Intents</Link>}
+        {signedIn && <Link href="/verifier" onClick={() => setMenu(false)} className="text-sm text-muted transition-colors hover:text-text">Verifier</Link>}
         <button onClick={toggle} className="flex items-center gap-2 text-sm text-muted transition-colors hover:text-text">
           {dark ? <Sun className="size-5" /> : <Moon className="size-5" />}
           <span className="sm:sr-only">{dark ? "Light mode" : "Dark mode"}</span>

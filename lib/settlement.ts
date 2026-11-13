@@ -80,7 +80,7 @@ export async function settlementView(roomId: string, room: RoomDoc, role: Role, 
   const sec = secretOf(d);
   let inVerifier = 0n, inWallet = 0n, chainError = "";
   try {
-    [inVerifier, inWallet] = await Promise.all([chain.verifierBalance(me, need.asset.id), chain.walletBalance(me, need.asset.contract)]);
+    [inVerifier, inWallet] = await Promise.all([chain.verifierBalance(me, need.asset.id), need.asset.walletTransfers === false ? Promise.resolve(0n) : chain.walletBalanceSafe(me, need.asset.contract)]);
   } catch (e) { chainError = short(e); }
   const missing = need.units > inVerifier ? need.units - inVerifier : 0n;
   const f = (v: bigint) => formatUnits(v, need.asset.decimals);
