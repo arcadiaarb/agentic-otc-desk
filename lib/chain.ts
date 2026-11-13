@@ -30,6 +30,10 @@ export const verifierBalance = async (account: string, assetId: string) => BigIn
 export const walletBalance = async (account: string, contract: string) => BigInt(await view(contract, "ft_balance_of", { account_id: account }));
 // Bridged tokens may have no NEP-141 contract to ask: that must never break a funds check, it just means "0 in the wallet".
 export const walletBalanceSafe = (account: string, contract: string) => walletBalance(account, contract).catch(() => 0n);
+// NEP-145: has this account ever registered with the token contract? A token contract refuses to send to an unregistered account.
+export async function storageRegistered(account: string, contract: string): Promise<boolean | null> {
+  try { return (await view(contract, "storage_balance_of", { account_id: account })) !== null; } catch { return null; }
+}
 export async function nativeBalance(account: string): Promise<bigint> {
   try { return BigInt((await rpc("query", { request_type: "view_account", finality: "optimistic", account_id: account })).amount); } catch { return 0n; }
 }

@@ -9,7 +9,7 @@ export type Fields = { pair?: string; amount?: string; price?: string; expiry?: 
 export const BASES = Array.from(new Set(cfg.pairs.map((p) => p.pair.split(" / ")[0])));
 
 const ALIAS: Record<string, string> = Object.fromEntries(
-  Object.entries({ ...Object.fromEntries(BASES.map((b) => [b.toLowerCase(), b])), ethereum: "ETH", bitcoin: "wBTC", btc: "wBTC", solana: "SOL" })
+  Object.entries({ ...Object.fromEntries(BASES.map((b) => [b.toLowerCase(), b])), ethereum: "ETH", bitcoin: "wBTC", btc: "wBTC", solana: "SOL", near: "wNEAR" })
     .filter(([, v]) => BASES.includes(v)),
 );
 const ALIAS_RE = Object.keys(ALIAS).join("|");

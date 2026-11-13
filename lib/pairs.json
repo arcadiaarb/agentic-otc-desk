@@ -51,23 +51,6 @@
       ]
     },
     {
-      "pair": "NEAR / USDC",
-      "sources": [
-        {
-          "provider": "binance",
-          "symbol": "NEARUSDT"
-        },
-        {
-          "provider": "binance-vision",
-          "symbol": "NEARUSDT"
-        },
-        {
-          "provider": "coinbase",
-          "symbol": "NEAR-USD"
-        }
-      ]
-    },
-    {
       "pair": "ETH / USDC",
       "sources": [
         {

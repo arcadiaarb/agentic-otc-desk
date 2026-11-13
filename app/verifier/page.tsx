@@ -9,11 +9,11 @@ import { parseUnits } from "@/lib/units";
 import { txUrl } from "@/lib/network";
 import { btnAction, btnGhost, btnGreen, fieldCls } from "@/lib/ui";
 
-type Tok = { symbol: string; id: string; contract: string; decimals: number; walletTransfers: boolean; inVerifier: string; inVerifierUnits: string; inWallet: string; inWalletUnits: string };
-type Data = { network: string; verifier: string; tokens: Tok[]; native: null | { symbol: string; wrapContract: string; decimals: number; balance: string; balanceUnits: string } };
+type Tok = { symbol: string; id: string; contract: string; decimals: number; walletTransfers: boolean; registered: boolean | null; inVerifier: string; inVerifierUnits: string; inWallet: string; inWalletUnits: string };
+type Data = { network: string; verifier: string; tokens: Tok[] };
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const RESERVE = 25n * 10n ** 22n; // keep 0.25 NEAR in the wallet for fees when wrapping
+const STORAGE_FEE = 1250000000000000000000n; // 0.00125 NEAR: one-time registration with a token contract (NEP-145)
 
 // Your balances inside the verifier, your key status, and deposit / withdraw.
 export default function Verifier() {
@@ -43,19 +43,17 @@ export default function Verifier() {
   const run = async (kind: "deposit" | "withdraw") => {
     if (!data) return;
     setErr(""); setMsg(""); setTx("");
-    const native = sel === "native";
-    const tok = native ? data.tokens.find((t) => t.symbol === "wNEAR") : data.tokens.find((t) => t.id === sel);
+    const tok = data.tokens.find((t) => t.id === sel);
     if (!tok) return;
     let units: bigint;
     try { units = parseUnits(amount, tok.decimals); } catch { setErr("Enter a valid amount."); return; }
     if (units <= 0n) { setErr("Enter an amount greater than zero."); return; }
     if (kind === "withdraw") {
-      if (native) { setErr("Withdraw wNEAR instead. Unwrapping back to native NEAR isn't supported here."); return; }
+      if (!tok.walletTransfers) { setErr(`${tok.symbol} is a bridged token. It can't be withdrawn to a NEAR wallet from here.`); return; }
       if (units > BigInt(tok.inVerifierUnits)) { setErr(`You only have ${tok.inVerifier} ${tok.symbol} in the verifier.`); return; }
     } else {
       if (!tok.walletTransfers) { setErr(`${tok.symbol} is a bridged token. Deposit it from its own chain, not from a NEAR wallet.`); return; }
-      if (native) { if (units + RESERVE > BigInt(data.native!.balanceUnits)) { setErr("Keep about 0.25 NEAR in your wallet for fees. Enter a smaller amount."); return; } }
-      else if (units > BigInt(tok.inWalletUnits)) { setErr(`Your wallet only has ${tok.inWallet} ${tok.symbol}.`); return; }
+      if (units > BigInt(tok.inWalletUnits)) { setErr(`Your wallet only has ${tok.inWallet} ${tok.symbol}.`); return; }
     }
 
     setBusy(kind);
@@ -68,18 +66,18 @@ export default function Verifier() {
         if (out?.status?.Failure) throw new Error(JSON.stringify(out.status.Failure).slice(0, 200));
       };
       if (kind === "deposit") {
-        // Native NEAR is wrapped into wNEAR first (1:1), then deposited like any other token.
-        if (native) await send(data.native!.wrapContract, "near_deposit", {}, 30n * 10n ** 12n, units);
         await send(tok.contract, "ft_transfer_call", { receiver_id: data.verifier, amount: units.toString(), msg: "" }, 100n * 10n ** 12n, 1n);
       } else {
+        // A token contract refuses to send to an account that never registered with it (the "smart contract panicked" error).
+        // So the first withdrawal of each token registers the account first (NEP-145, about 0.00125 NEAR, one time).
+        if (tok.registered !== true) await send(tok.contract, "storage_deposit", { account_id: accountId, registration_only: true }, 30n * 10n ** 12n, STORAGE_FEE);
         // Direct withdrawal (no msg, so a failed transfer is refunded). Needs exactly 1 yoctoNEAR.
         await send(data.verifier, "ft_withdraw", { token: tok.contract, receiver_id: accountId, amount: units.toString() }, 100n * 10n ** 12n, 1n);
       }
       for (let i = 0; i < 4; i++) { await wait(2000); await load(); }
       setAmount(""); setMsg(kind === "deposit" ? "Deposited. Your balances are updated." : "Withdrawn to your wallet. Your balances are updated.");
     } catch (e) {
-      const m = e instanceof Error ? e.message : "The transaction didn't go through.";
-      setErr(native && kind === "deposit" && /method|MethodNotFound/i.test(m) ? "Wrapping native NEAR isn't available for this token on testnet. Get wNEAR from the Tidepool app instead." : m);
+      setErr(e instanceof Error ? e.message : "The transaction didn't go through.");
     } finally {
       setBusy("");
     }
@@ -115,7 +113,6 @@ export default function Verifier() {
             </li>
           ))}
         </ul>
-        {data.native && <p className="mt-3 border-t border-dashed border-line pt-3 text-xs text-muted">NEAR in your wallet: {data.native.balance}. It can be wrapped into wNEAR when you deposit.</p>}
       </div>
 
       <div className="mt-4 rounded-2xl border border-line bg-surface p-5 text-sm">
@@ -140,13 +137,13 @@ export default function Verifier() {
           <input className={fieldCls} type="number" inputMode="decimal" min="0" step="any" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Amount" />
           <select className={`${fieldCls} sm:max-w-44`} value={sel} onChange={(e) => setSel(e.target.value)} aria-label="Token">
             {data.tokens.map((t) => <option key={t.id} value={t.id}>{t.symbol}</option>)}
-            {data.native && <option value="native">NEAR (wraps to wNEAR)</option>}
           </select>
         </div>
         <div className="mt-4 flex gap-3">
           <button className={btnAction} disabled={!!busy} onClick={() => run("deposit")}>{busy === "deposit" ? <BusyText text="Depositing…" /> : "Deposit"}</button>
           <button className={btnGhost} disabled={!!busy} onClick={() => run("withdraw")}>{busy === "withdraw" ? <BusyText text="Withdrawing…" tone="orange" /> : "Withdraw"}</button>
         </div>
+        <p className="mt-3 text-xs text-muted">The first time you withdraw a token, your account is also registered with that token (a one-time fee of about 0.00125 NEAR), so you&apos;ll see an extra approval.</p>
         {msg && <p className="mt-3 text-sm text-green-ink">{msg}</p>}
         {tx && <a href={tx} target="_blank" rel="noreferrer" className="mt-2 block text-xs underline">View transaction</a>}
         {err && <p role="alert" className="mt-3 text-sm text-orange">{err}</p>}

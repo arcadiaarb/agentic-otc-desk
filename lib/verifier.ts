@@ -2,25 +2,21 @@
 // Pages and routes read from here instead of each talking to the chain on their own.
 import { NET, NETWORK } from "./network";
 import { formatUnits } from "./units";
-import { nativeBalance, verifierBalance, walletBalanceSafe } from "./chain";
+import { storageRegistered, verifierBalance, walletBalanceSafe } from "./chain";
 
 export async function overview(account: string) {
-  const all = Object.values(NET.tokens);
-  const real = all.filter((a) => !a.native); // native NEAR is the same verifier asset as wNEAR
-  const tokens = await Promise.all(real.map(async (a) => {
-    const [inV, inW] = await Promise.all([
+  const unique = [...new Map(Object.values(NET.tokens).map((a) => [a.id, a])).values()]; // aliases share one asset
+  const tokens = await Promise.all(unique.map(async (a) => {
+    const transfers = a.walletTransfers !== false;
+    const [inV, inW, registered] = await Promise.all([
       verifierBalance(account, a.id).catch(() => 0n),
-      a.walletTransfers === false ? Promise.resolve(0n) : walletBalanceSafe(account, a.contract),
+      transfers ? walletBalanceSafe(account, a.contract) : Promise.resolve(0n),
+      transfers ? storageRegistered(account, a.contract) : Promise.resolve(null),
     ]);
     return {
-      symbol: a.symbol, id: a.id, contract: a.contract, decimals: a.decimals, walletTransfers: a.walletTransfers !== false,
+      symbol: a.symbol, id: a.id, contract: a.contract, decimals: a.decimals, walletTransfers: transfers, registered,
       inVerifier: formatUnits(inV, a.decimals), inVerifierUnits: inV.toString(), inWallet: formatUnits(inW, a.decimals), inWalletUnits: inW.toString(),
     };
   }));
-  const nat = all.find((a) => a.native);
-  const near = nat?.wrapContract ? await nativeBalance(account) : null;
-  return {
-    network: NETWORK, verifier: NET.verifier, tokens,
-    native: nat && near !== null ? { symbol: "NEAR", wrapContract: nat.wrapContract!, decimals: nat.decimals, balance: formatUnits(near, nat.decimals), balanceUnits: near.toString() } : null,
-  };
+  return { network: NETWORK, verifier: NET.verifier, tokens };
 }

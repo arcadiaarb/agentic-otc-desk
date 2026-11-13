@@ -16,8 +16,8 @@ const TESTNET = {
   rpcs: ["https://rpc.testnet.near.org", "https://rpc.testnet.fastnear.com"],
   tokens: {
     wNEAR: T("wNEAR", "wnear.tidepool-sandbox.testnet", 24),
-    // Native NEAR trades as wNEAR (1:1). The sandbox's wNEAR may not support wrapping; the /verifier page reports that clearly.
-    NEAR: { ...T("wNEAR", "wnear.tidepool-sandbox.testnet", 24), native: true, wrapContract: "wnear.tidepool-sandbox.testnet" },
+    // Legacy pair name "NEAR / ..." from earlier listings: same asset as wNEAR. (Wrapping native NEAR isn't supported by the testnet sandbox.)
+    NEAR: T("wNEAR", "wnear.tidepool-sandbox.testnet", 24),
     ETH: T("ETH", "eth.tidepool-sandbox.testnet", 18),
     wBTC: T("wBTC", "wbtc.tidepool-sandbox.testnet", 8),
     SOL: { ...T("SOL", "sol.tp-omft.testnet", 9), walletTransfers: false },
