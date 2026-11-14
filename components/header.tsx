@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useWallet } from "./wallet-provider";
 import { btnGreen } from "@/lib/ui";
 import { BusyText } from "./spinner";
+import logo from "@/app/logo/tacet_logo.webp";
 
 const short = (id: string) => (id.length > 18 ? `${id.slice(0, 8)}…${id.slice(-6)}` : id);
 
@@ -33,7 +35,7 @@ export function Header() {
   return (
     <header className="relative mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
       <Link href="/" className="flex items-center gap-2.5" onClick={() => setMenu(false)}>
-        <span className="size-6 rounded-full bg-green" aria-hidden />
+        <Image src={logo} alt="" width={24} height={24} className="size-6 rounded-full object-contain" />
         <span className="font-display text-lg font-bold tracking-tight">Tacet</span>
       </Link>
       <button onClick={() => setMenu(!menu)} aria-label={menu ? "Close menu" : "Open menu"} aria-expanded={menu} aria-controls="site-nav" className="text-text sm:hidden">

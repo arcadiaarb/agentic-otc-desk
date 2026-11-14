@@ -208,7 +208,7 @@ export function SettlementFlow({ roomId }: { roomId: string }) {
               ? <button className={btnAction} onClick={() => setStep(2)}>Next</button>
               : canDeposit
                 ? <button className={btnAction} disabled={busy === "deposit"} onClick={deposit}>{busy === "deposit" ? <BusyText text="Depositing…" /> : "Deposit"}</button>
-                : <p className="text-sm text-muted">Your wallet has no {v.you.symbol} to deposit. {v.network === "testnet" ? "On testnet, get tokens from the Tidepool app, then reload." : ""}</p>}
+                : <p className="text-sm text-muted">Your wallet has no {v.you.symbol} to deposit. {v.network === "testnet" ? "Get tokens from the Tidepool app, then reload." : ""}</p>}
           </div>
         </>
       );

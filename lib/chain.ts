@@ -89,7 +89,10 @@ export class RelayerMissing extends Error {}
 export async function execute(signed: unknown[]): Promise<string> {
   const id = process.env.RELAYER_ACCOUNT_ID, key = process.env.RELAYER_PRIVATE_KEY;
   if (!id || !key) throw new RelayerMissing("The settlement relayer isn't configured on the server.");
-  const acct = new Account(id, new providers.JsonRpcProvider({ url: NET.rpcs[0] }), KeyPairSigner.fromSecretKey(key as `ed25519:${string}`));
+  const rpcProvider = new providers.FailoverRpcProvider(
+    NET.rpcs.map((url) => new providers.JsonRpcProvider({ url })),
+  );
+  const acct = new Account(id, rpcProvider, KeyPairSigner.fromSecretKey(key as `ed25519:${string}`));
   const out: any = await acct.callFunctionRaw({ contractId: NET.verifier, methodName: "execute_intents", args: { signed }, gas: 300n * 10n ** 12n, deposit: 0n });
   if (out.status?.Failure) throw new Error(JSON.stringify(out.status.Failure).slice(0, 300));
   return out.transaction?.hash as string;

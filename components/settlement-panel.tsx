@@ -126,7 +126,7 @@ export function SettlementPanel({ roomId }: { roomId: string }) {
             <button className={btnAction} disabled={!!busy} onClick={deposit}>{busy === "deposit" ? <BusyText text="Depositing…" /> : `Deposit from wallet (${v.you.inWallet} ${v.you.symbol} available)`}</button>
           )}
           {!v.you.enough && BigInt(v.you.depositUnits || "0") === 0n && (
-            <p className="text-muted">Your wallet has no {v.you.symbol} to deposit. {v.network === "testnet" ? "On testnet, get tokens from the Tidepool app or faucet, then deposit." : ""}</p>
+            <p className="text-muted">Your wallet has no {v.you.symbol} to deposit. {v.network === "testnet" ? "Get tokens from the Tidepool app or faucet, then deposit." : ""}</p>
           )}
 
           {keyMissing && (

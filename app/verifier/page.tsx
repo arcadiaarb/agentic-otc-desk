@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { actionCreators } from "@near-js/transactions";
-import { BusyText, PageSpinner } from "@/components/spinner";
+import { BusyText, PageSpinner, Spinner } from "@/components/spinner";
 import { useVerifierKey } from "@/components/use-verifier-key";
 import { useWallet } from "@/components/wallet-provider";
 import { parseUnits } from "@/lib/units";
@@ -13,6 +13,7 @@ type Tok = { symbol: string; id: string; contract: string; decimals: number; wal
 type Data = { network: string; verifier: string; tokens: Tok[] };
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const KEY_CHECK_RETRY_MS = 10_000;
 const STORAGE_FEE = 1250000000000000000000n; // 0.00125 NEAR: one-time registration with a token contract (NEP-145)
 
 // Your balances inside the verifier, your key status, and deposit / withdraw.
@@ -26,6 +27,9 @@ export default function Verifier() {
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [tx, setTx] = useState("");
+  const checkingKey = key.busy !== "register" && (
+    key.busy === "check" || key.registered === undefined || key.registered === null
+  );
 
   const load = useCallback(async () => {
     try {
@@ -39,6 +43,11 @@ export default function Verifier() {
     }
   }, []);
   useEffect(() => { if (signedIn) void load(); }, [signedIn, load]);
+  useEffect(() => {
+    if (!signedIn || !key.signKey || key.registered !== null || key.busy) return;
+    const timer = window.setTimeout(() => { void key.check(); }, KEY_CHECK_RETRY_MS);
+    return () => window.clearTimeout(timer);
+  }, [signedIn, key.signKey, key.registered, key.busy, key.check]);
 
   const run = async (kind: "deposit" | "withdraw") => {
     if (!data) return;
@@ -116,18 +125,17 @@ export default function Verifier() {
       </div>
 
       <div className="mt-4 rounded-2xl border border-line bg-surface p-5 text-sm">
-        {key.registered === true && <p>Your key is registered. <span className="text-green-ink">Ready to sign deals.</span></p>}
+        {!key.needsProbe && checkingKey && <div className="flex items-center gap-2 text-muted"><Spinner className="size-4" /> Checking your key with the verifier…</div>}
+        {!key.needsProbe && !checkingKey && key.registered === true && <p>Your key is registered. <span className="text-green-ink">Ready to sign deals.</span></p>}
         {key.needsProbe && <p className="text-muted">Your wallet key isn&apos;t registered with the verifier yet. Your wallet will ask for one free signature to identify the key, then we register it.</p>}
-        {!key.needsProbe && key.registered === false && <p className="text-orange">Your key isn&apos;t registered with the verifier yet.</p>}
-        {!key.needsProbe && key.registered === null && <p className="text-muted">We couldn&apos;t verify your key automatically.</p>}
-        {!key.needsProbe && key.registered === undefined && <p className="text-muted">Checking your key…</p>}
+        {!key.needsProbe && !checkingKey && key.registered === false && <p className="text-orange">Your key isn&apos;t registered with the verifier yet.</p>}
         {key.signKey && <p className="mt-1 break-all font-mono text-xs text-muted">{key.signKey}</p>}
         {key.tx && <a href={key.tx} target="_blank" rel="noreferrer" className="mt-1 block text-xs underline">View registration transaction</a>}
         {key.error && <p role="alert" className="mt-2 text-orange">{key.error}</p>}
         {key.registered !== true && (
           <div className="mt-3 flex flex-wrap gap-3">
             <button className={btnAction} disabled={!!key.busy} onClick={() => key.register()}>{key.busy === "register" ? <BusyText text="Registering…" /> : "Register Key"}</button>
-            {!key.needsProbe && <button className={btnGhost} disabled={!!key.busy} onClick={() => key.check()}>Check again</button>}
+            {!key.needsProbe && !checkingKey && <button className={btnGhost} disabled={!!key.busy} onClick={() => key.check()}>Check again</button>}
           </div>
         )}
       </div>

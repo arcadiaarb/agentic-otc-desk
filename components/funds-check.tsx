@@ -72,7 +72,7 @@ export function FundsCheck({ pair, amount, onChange }: { pair: string; amount: s
           )}
           {!f.enough && !f.walletTransfers && <p className="text-muted">{f.symbol} is a bridged token. It has to be deposited from its own chain, not from a NEAR wallet.</p>}
           {!f.enough && f.walletTransfers && !canDeposit && (
-            <p className="text-muted">Your wallet has no {f.symbol} to deposit. {f.network === "testnet" ? "On testnet, get tokens from the Tidepool app, or use the Verifier page." : "Use the Verifier page to top up."}</p>
+            <p className="text-muted">Your wallet has no {f.symbol} to deposit. {f.network === "testnet" ? "Get tokens from the Tidepool app, or use the Verifier page." : "Use the Verifier page to top up."}</p>
           )}
           <div className="border-t border-dashed border-line pt-2">
             {key.registered === true && <p>Wallet key: <span className="text-green-ink">registered with the verifier.</span></p>}

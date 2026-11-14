@@ -47,7 +47,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           import("@near-wallet-selector/meteor-wallet"),
           import("@near-wallet-selector/here-wallet"),
         ]);
-      // NETWORK comes from NEXT_PUBLIC_NEAR_NETWORK (testnet by default).
       const s = await setupWalletSelector({ network: NETWORK, modules: [setupMyNearWallet(), setupMeteorWallet(), setupHereWallet()] });
       if (cancelled) return;
       selector.current = s;

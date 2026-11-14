@@ -13,7 +13,7 @@ const T = (symbol: string, contract: string, decimals: number): Asset => ({ id: 
 const TESTNET = {
   verifier: "verifier.tidepool-sandbox.testnet",
   explorer: "https://testnet.nearblocks.io",
-  rpcs: ["https://rpc.testnet.near.org", "https://rpc.testnet.fastnear.com"],
+  rpcs: ["https://rpc.testnet.fastnear.com", "https://rpc.testnet.near.org"],
   tokens: {
     wNEAR: T("wNEAR", "wnear.tidepool-sandbox.testnet", 24),
     // Legacy pair name "NEAR / ..." from earlier listings: same asset as wNEAR. (Wrapping native NEAR isn't supported by the testnet sandbox.)

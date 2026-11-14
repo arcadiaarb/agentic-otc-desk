@@ -5,10 +5,12 @@ import { WalletProvider } from "@/components/wallet-provider";
 import { Header } from "@/components/header";
 import { SpotProvider } from "@/components/spot-provider";
 import { SpotStrip } from "@/components/spot-strip";
+import logo from "./logo/tacet_logo.webp";
 
 export const metadata: Metadata = {
   title: "Tacet",
   description: "A private desk for over-the-counter trades on NEAR.",
+  icons: { icon: logo.src, shortcut: logo.src, apple: logo.src },
 };
 
 // Dark by default; only switch to light if the user chose it.
